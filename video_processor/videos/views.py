@@ -10,14 +10,15 @@ def video_upload(request):
     if request.method == 'POST':
         form = VideoUploadForm(request.POST, request.FILES)
         if form.is_valid():
-            video = form.save()  
-
+            video = form.save()
             fs = FileSystemStorage()
-            subprocess.run(['CCExtractor_win_portable/ccextractorwinfull.exe', fs.path(video.file.name), '-o', 'output.srt'])
-            with open('output.srt', 'r') as f:
+            video_path = fs.path(video.file.name)
+            output_srt_path = video_path.replace('.webm', '.srt')
+            subprocess.run(['ffmpeg', '-i', video_path, '-map', '0:s:0', output_srt_path])
+            with open(output_srt_path, 'r', encoding='utf-8') as f:
                 subtitles_content = f.read()
-            Subtitle.objects.create(video=video, content=subtitles_content)
 
+            Subtitle.objects.create(video=video, content=subtitles_content)
             return redirect('video_list')
     else:
         form = VideoUploadForm()
@@ -46,6 +47,7 @@ def search_subtitle(request, video_id):
             timestamps.append(match.group(1))
     
     return JsonResponse({'timestamps': timestamps})
+
 def get_timestamp(subtitle_line):
     timestamp_pattern = re.compile(r'(\d{2}:\d{2}:\d{2},\d{3}) --> (\d{2}:\d{2}:\d{2},\d{3})')
     

@@ -71,6 +71,16 @@
     </style>
 </head>
 <body>
+    <script>
+        function playVideoAtTime(timestamp) {
+    const video = document.getElementById('videoPlayer');
+    const parts = timestamp.split(':');
+    const seconds = (+parts[0]) * 3600 + (+parts[1]) * 60 + (+parts[2].replace(',', '.')); 
+    video.currentTime = seconds;
+    video.play();
+}
+
+    </script>
     <h1>{{ video.title }}</h1>
     <video controls>
         <source src="{{ video.file.url }}" type="video/mp4">
