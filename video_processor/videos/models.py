@@ -11,8 +11,7 @@ class Video(models.Model):
 class Subtitle(models.Model):
     video = models.ForeignKey(Video, related_name='subtitles', on_delete=models.CASCADE)
     language = models.CharField(max_length=50, default='English')
-    content = models.TextField()
-    timestamp = models.CharField(max_length=50)  
+    content = models.TextField() 
 
     def __str__(self):
         return f"{self.video} - {self.timestamp}"

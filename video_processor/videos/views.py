@@ -34,27 +34,31 @@ def video_detail(request, video_id):
     subtitles = video.subtitles.all()
     return render(request, 'video_detail.html', {'video': video, 'subtitles': subtitles})
 
+
 def search_subtitle(request, video_id):
-    query = request.GET.get('q', '')
+    query = request.GET.get('q', '').strip()
     video = get_object_or_404(Video, id=video_id)
-    
-    subtitles = Subtitle.objects.filter(video=video, content__icontains=query)
-    
+    subtitles = Subtitle.objects.filter(video=video)
     timestamps = []
+    timestamp_pattern = r'(\d{2}:\d{2}:\d{2},\d{3}) --> (\d{2}:\d{2}:\d{2},\d{3})'
     for subtitle in subtitles:
-        match = re.search(r'(\d{2}:\d{2}:\d{2},\d{3})', subtitle.content)
-        if match:
-            timestamps.append(match.group(1))
-    
-    return JsonResponse({'timestamps': timestamps})
+        blocks = subtitle.content.split('\n\n')  
+        for block in blocks:
+            lines = block.split('\n')
 
-def get_timestamp(subtitle_line):
-    timestamp_pattern = re.compile(r'(\d{2}:\d{2}:\d{2},\d{3}) --> (\d{2}:\d{2}:\d{2},\d{3})')
-    
-    match = timestamp_pattern.search(subtitle_line)
-    if match:
-        start_timestamp = match.group(1)
-    
-        return start_timestamp.replace(',', '.')
-    return '00:00:00'  
+            if len(lines) >= 3:  
+                timestamp_line = lines[1]
+                match = re.match(timestamp_pattern, timestamp_line)
+                
+                if match:
+                    start_time = match.group(1) 
+                    subtitle_text = ' '.join(lines[2:])  
+                    
+                    if re.search(re.escape(query), subtitle_text, re.IGNORECASE):
+                        timestamps.append(start_time)
 
+    return render(request, 'video_search.html', {'video': video,'timestamps': timestamps,'query': query,})
+
+
+
+  
